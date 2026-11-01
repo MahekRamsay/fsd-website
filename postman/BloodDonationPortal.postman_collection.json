@@ -1,0 +1,233 @@
+{
+  "info": {
+    "name": "Blood Donation Portal",
+    "_postman_id": "blood-donation-portal-v1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api" },
+    { "key": "token",   "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": { "method": "GET", "url": "{{baseUrl}}/health" },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has status ok', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /auth/register (donor)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Donor\",\n  \"email\": \"testdonor@example.com\",\n  \"password\": \"Test@1234\",\n  \"role\": \"donor\",\n  \"bloodGroup\": \"O+\",\n  \"city\": \"Mumbai\",\n  \"phone\": \"9999999999\"\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "pm.test('Has token', () => pm.expect(pm.response.json()).to.have.property('token'));"
+          ] } }]
+        },
+        {
+          "name": "POST /auth/login",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@blood.com\",\n  \"password\": \"Admin@123\"\n}"
+            }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const json = pm.response.json();",
+            "pm.test('Has token', () => pm.expect(json).to.have.property('token'));",
+            "pm.collectionVariables.set('token', json.token);"
+          ] } }]
+        },
+        {
+          "name": "GET /auth/me",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/auth/me",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has user', () => pm.expect(pm.response.json()).to.have.property('user'));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "Donors",
+      "item": [
+        {
+          "name": "GET /donors",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/donors?bloodGroup=B%2B&city=Mumbai", "query": [
+              { "key": "bloodGroup", "value": "B+" },
+              { "key": "city",       "value": "Mumbai" }
+            ] },
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has donors array', () => pm.expect(pm.response.json()).to.have.property('donors'));"
+          ] } }]
+        },
+        {
+          "name": "PUT /donors/me",
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/donors/me",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"isAvailable\": true,\n  \"city\": \"Mumbai\"\n}" }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "Requests",
+      "item": [
+        {
+          "name": "POST /requests",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/requests",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"bloodGroup\": \"O+\",\n  \"units\": 3,\n  \"city\": \"Mumbai\",\n  \"urgency\": \"urgent\",\n  \"note\": \"Emergency surgery\"\n}" }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201', () => pm.response.to.have.status(201));",
+            "pm.test('Has request', () => pm.expect(pm.response.json()).to.have.property('request'));"
+          ] } }]
+        },
+        {
+          "name": "GET /requests",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/requests?status=open",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has requests', () => pm.expect(pm.response.json()).to.have.property('requests'));"
+          ] } }]
+        },
+        {
+          "name": "POST /requests/:id/respond",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/requests/REPLACE_WITH_REQUEST_ID/respond",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 201 or 409', () => pm.expect([201, 409]).to.include(pm.response.code));"
+          ] } }]
+        },
+        {
+          "name": "GET /requests/:id/responses",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/requests/REPLACE_WITH_REQUEST_ID/responses",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 or 403', () => pm.expect([200, 403]).to.include(pm.response.code));"
+          ] } }]
+        },
+        {
+          "name": "PATCH /requests/:id/status",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/requests/REPLACE_WITH_REQUEST_ID/status",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": { "mode": "raw", "raw": "{ \"status\": \"fulfilled\" }" }
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Success or forbidden', () => pm.expect([200, 403]).to.include(pm.response.code));"
+          ] } }]
+        },
+        {
+          "name": "DELETE /requests/:id",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/requests/REPLACE_WITH_REQUEST_ID",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Success or forbidden', () => pm.expect([200, 403, 404]).to.include(pm.response.code));"
+          ] } }]
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "GET /admin/stats",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/stats",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Has totalDonors', () => pm.expect(pm.response.json()).to.have.property('totalDonors'));"
+          ] } }]
+        },
+        {
+          "name": "GET /admin/users",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/admin/users",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Users array exists', () => pm.expect(pm.response.json()).to.have.property('users'));"
+          ] } }]
+        },
+        {
+          "name": "DELETE /admin/users/:id",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/admin/users/REPLACE_WITH_USER_ID",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          },
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Success or not found', () => pm.expect([200, 404]).to.include(pm.response.code));"
+          ] } }]
+        }
+      ]
+    }
+  ]
+}

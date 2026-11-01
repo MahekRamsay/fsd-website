@@ -1,0 +1,15 @@
+/* index.css – Tailwind base + tiny global overrides */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Smooth scrolling for all anchor links */
+html { scroll-behavior: smooth; }
+
+/* Loading spinner keyframe (used in Spinner component) */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.spinner {
+  animation: spin 0.8s linear infinite;
+}
